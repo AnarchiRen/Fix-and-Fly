@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fix and Fly</title>
+<title>Fix and fly: Go Rocket!</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:dark;--bg:#120d2b;--panel:#1d1647;--line:#4a3d9a;--ink:#f4ecd8;--dim:#a99fd6;--amber:#ffb000;--bad:#ff5a7a;--ok:#5ef2b0;
@@ -97,6 +97,17 @@ flare:'NASA cannot yet reliably predict solar flares, so crews must be protected
 const EARTH={x:300,y:800,r:40},SUN={x:1300,y:800,r:70},W=2600,H=1600;
 const doseD=d=>d<250?.7:.7+1.14*Math.min(1,(d-250)/1500),fluxS=d=>Math.pow(1000/Math.max(d,60),2),
 radD=d=>Math.max(0,doseD(d)-.7)*2.1*(1-S.I.g),heatD=d=>Math.max(0,fluxS(d)-S.B.tol)*.9;
+const IMGS={},TEX={};['earth','sun'].forEach(k=>{const i=new Image();i.src='assets/'+k+'.png';IMGS[k]=i});
+function tex(k){const m=IMGS[k];if(m&&m.complete&&m.naturalWidth)return m;if(TEX[k])return TEX[k];
+ const w=512,h=256,o=document.createElement('canvas');o.width=w;o.height=h;const g=o.getContext('2d'),e=k==='earth';let s=e?7:3;const rnd=()=>(s=s*16807%2147483647)/2147483647;
+ g.fillStyle=e?'#2b64d9':'#ffb000';g.fillRect(0,0,w,h);
+ for(let i=0;i<(e?26:40);i++){const x=rnd()*w,y=(.15+.7*rnd())*h,rx=e?18+rnd()*40:5+rnd()*10,ry=rx*(.5+rnd()*.5);g.fillStyle=e?'#3fa34d':'#c2410c';for(const dx of[-w,0,w]){g.beginPath();g.ellipse(x+dx,y,rx,ry,0,0,7);g.fill()}}
+ if(e){g.fillStyle='#f4ecd8';g.fillRect(0,0,w,10);g.fillRect(0,h-10,w,10)}
+ return TEX[k]=o}
+function globe(c,x,y,r,t,per,tilt,shade){const W4=r*4,off=(S.t/per%1)*W4;
+ c.save();c.translate(x,y);c.rotate(tilt);c.beginPath();c.arc(0,0,r,0,7);c.clip();
+ c.drawImage(t,-r+off-W4,-r,W4,r*2);c.drawImage(t,-r+off,-r,W4,r*2);
+ const g=c.createRadialGradient(r*.3,0,r*.1,0,0,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,shade);c.fillStyle=g;c.fillRect(-r,-r,r*2,r*2);c.restore()}
 let sel={b:0,e:0,i:0},S,raf,K={},seen={},tt;
 const part=()=>({B:BODY[sel.b],E:ENG[sel.e],I:INT[sel.i]});
 const tot=()=>{const{B,E,I}=part();const c=B.c+E.c+I.c,m=B.m+E.m+I.m;return{c,m,fuel:E.f*1.7*(1.3-m/20),left:BUDGET-c}};
@@ -132,7 +143,15 @@ u:{b:[['Whipple shield (spaced outer layer)',16,.55],['Extra radiation paint',6,
 {n:'Solar wind surge',dmg:3,dur:10,push:1,why:'A fast stream of solar wind is dragging your rocket toward the Sun and heating its surface.',
 clue:'Surface heat is reflected by a ceramic coating, not absorbed by dark paint. Escaping the sunward push takes raw thrust, which an efficiency tune-up does not give.',
 fact:'Solar wind is hard to forecast. Parker Solar Probe is flying through the Sun’s corona to learn how it works.',
-u:{b:[['Reflective ceramic coating',14,.4],['Black matte paint',4,0]],e:[['High-thrust booster',16,.45],['Efficiency tune-up',8,0]],i:[['Cooling loop',10,.15],['Insulation foam',6,.05]]}}];
+u:{b:[['Reflective ceramic coating',14,.4],['Black matte paint',4,0]],e:[['High-thrust booster',16,.45],['Efficiency tune-up',8,0]],i:[['Cooling loop',10,.15],['Insulation foam',6,.05]]}},
+{n:'Galactic cosmic radiation surge',dmg:4,dur:10,why:'Cosmic rays from outside our solar system are streaming through your hull. When the Sun is quiet, more of them reach you.',
+clue:'These particles are too energetic to stop completely. Metal can create showers of secondary particles. Hydrogen-rich material breaks them up best, and less time in the beam means less dose.',
+fact:'NASA found that plastics like polyethylene shield cosmic rays better than aluminum, but no light shield stops them fully.',
+u:{b:[['Hydrogen-rich composite panel',14,.25],['Thicker steel hull',10,0]],e:[['Fast transit burn',10,.2],['Efficiency tune-up',6,0]],i:[['Polyethylene liner layer',12,.4],['Extra aluminum plating',6,0]]}},
+{n:'Extreme temperature swings',dmg:5,dur:9,why:'Your rocket is swinging between blazing sunlight and deep shadow. The materials expand and shrink, and parts begin to crack.',
+clue:'Space has no air to even out the heat, so the sunny side bakes while the shaded side freezes. Insulation blankets slow the swing, and slowly rolling the craft spreads the heat evenly.',
+fact:'Apollo spacecraft used a slow “barbecue roll” to even out temperatures, and most spacecraft wear multilayer insulation.',
+u:{b:[['Multi-layer insulation blankets',14,.4],['Black matte paint',4,0]],e:[['Slow barbecue-roll rotation',8,.3],['Extra boost',8,0]],i:[['Heater and radiator loop',12,.25],['Extra seat padding',4,0]]}}];
 const SATS=[
 {n:'Earth observer',x:900,y:950,e:0,sub:'Power system',parts:[['Replace the solar array power line',1],['Reboot the onboard computer',0,'The computer was fine. The readings show a sudden power loss.'],['Recalibrate the Earth sensor',0,'Pointing was normal. The problem is the power output.']],fix:'Replace the damaged power line from the solar array',
 tel:['Solar array output: 6 kW to 1 kW in minutes','Magnetic field: strongly disturbed','Radiation: energetic particle storm'],
@@ -156,6 +175,8 @@ function missionStep(dt){
  const s=SATS[S.mi];if(!s)return;
  const d=Math.hypot(S.x-s.x,S.y-s.y),dE=Math.hypot(S.x-EARTH.x,S.y-EARTH.y);
  if(dE<260){if(S.hp<100)S.hp=Math.min(100,S.hp+10*dt);if(S.fuel<S.fmax)S.fuel=Math.min(S.fmax,S.fuel+8*dt)}
+ const tr=(k,ok,ix)=>{if(S['d'+k])return;if(ok&&dE>260&&S.fl<=0&&!S.pause){S['t'+k]=(S['t'+k]||0)+dt;if(S['t'+k]>6){S['d'+k]=1;openEvent({ev:EVT[ix]})}}};
+ tr(1,S.mi===1&&S.ph==='find',3);tr(2,S.mi===2&&S.ph==='send',4);
  if(S.ph==='find'){if(d<70){S.ph='scan';S.pt=0;toast('Spacecraft found. Collecting readings. Stay close.',2500)}}
  else if(S.ph==='scan'){if(d>90){S.ph='find';S.pt=0}else{S.pt+=dt;if(S.pt>=3){S.ph='ready';S.pt=0;
   toast('<b class="ok">Data collected: '+s.n+'</b><br>'+s.tel.join('<br>')+'<br><b>Diagnosis: '+s.sub+'.</b> '+s.why+'<br><b>Repair:</b> '+s.fix+'. Press Fix (X).',16000)}}}
@@ -224,8 +245,8 @@ function draw(){
  c.fillStyle='#05030f';c.fillRect(0,0,800,500);c.save();c.translate(-cx,-cy);
  c.fillStyle='#8f86c9';sdots.forEach(s=>c.fillRect(s[0],s[1],s[2],s[2]));
  c.strokeStyle='#ff5a7a55';c.setLineDash([6,8]);c.beginPath();c.arc(SUN.x,SUN.y,400,0,7);c.stroke();c.setLineDash([]);
- c.fillStyle='#ffb000';c.beginPath();c.arc(SUN.x,SUN.y,SUN.r,0,7);c.fill();
- c.fillStyle='#3d7bff';c.beginPath();c.arc(EARTH.x,EARTH.y,EARTH.r,0,7);c.fill();
+ globe(c,SUN.x,SUN.y,SUN.r,tex('sun'),508,.1265,'rgba(150,40,0,.55)');
+ globe(c,EARTH.x,EARTH.y,EARTH.r,tex('earth'),20,.408,'rgba(0,0,40,.65)');
  c.fillStyle='#f4ecd8';c.font='10px monospace';c.fillText('EARTH',EARTH.x-20,EARTH.y+58);c.fillText('SUN',SUN.x-12,SUN.y+90);
  c.strokeStyle='#8f86c9';S.deb.forEach(d=>{c.strokeRect(d.x-8,d.y-8,16,16)});
  STARS.forEach(s=>{const g=S.got.includes(s);c.fillStyle=g?'#5ef2b0':'#fff27a';c.beginPath();c.moveTo(s.x,s.y-14);c.lineTo(s.x+9,s.y);c.lineTo(s.x,s.y+14);c.lineTo(s.x-9,s.y);c.fill();c.fillText(s.n,s.x-30,s.y+28)});
