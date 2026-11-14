@@ -78,7 +78,7 @@ This is a game, not a simulator.
 
 ## Use of AI tools
 
-Game concept, mechanics and theme: No Game No Life.
+Game concept, mechanics and theme by No Game No Life team.
 
 Claude (a large language model by Anthropic) was used to help refine the game design,
 research real events and sources, write the game code (HTML, CSS and JavaScript), and draft
