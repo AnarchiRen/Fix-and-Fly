@@ -1,4 +1,4 @@
-# Fix and Fly
+# Fix and Fly: Go Rocket!
 
 A retro space mission design game made for the NASA Space Apps Challenge 2026
 (challenge: *Space Mission Design Game*).
@@ -24,7 +24,8 @@ repair, survive an unknown solar event, and report your findings to Mission Cont
    upgrades. Keep your hull above 25%.
 7. **Report:** fly into the Earth safe zone (it also restores hull and fuel) to transmit
    the data. Collect stars on the way for extra budget.
-8. Finish all three to unlock a harder level.
+8. Two more random events strike on the way: **galactic cosmic radiation** (on the way to the second spacecraft) and **extreme temperature swings** (on the way back to Earth after the third repair). Choose upgrades to protect your rocket.
+9. Finish all three to unlock a harder level.
 
 Controls: arrows or WASD to fly, X to scan/fix, R repairs hull (+8, $6), F refuels ($5).
 On-screen buttons work on touch devices.
@@ -55,6 +56,9 @@ data analysis, and communications with Earth.
 | Safe zone about 0.7 mSv/day | ISS crews receive roughly 0.4 to 1.0 mSv/day |
 | Basic shell does almost nothing against cosmic rays; polyethylene about 15% better, and 50% better against flares | NASA Science archive, plastic shielding article (2005) |
 | Sunlight strength rises with 1 / distance² | Inverse-square law of solar flux |
+| Earth turns once per day and the Sun about once per 25 days, both west to east, with axial tilts of 23.4° and 7.25° | Standard values for Earth and the Sun’s equatorial rotation. In the game one Earth day lasts 20 seconds, so the Sun turns 25.4 times slower |
+| Galactic cosmic radiation event | Cosmic rays are too energetic to stop fully; hydrogen-rich plastics shield better than aluminum |
+| Extreme temperature swing event | No air in space means big sun and shade swings; Apollo’s slow “barbecue roll” and multilayer insulation manage it |
 | Earth observer, power failure | Midori-II (ADEOS-II), October 2003 Halloween storms |
 | Comms constellation, drag | Starlink loss, February 2022 geomagnetic storm (38 of 49 satellites) |
 | Data relay, Earth sensor errors | Kodama relay satellite, October 2003 storms |
@@ -78,7 +82,7 @@ This is a game, not a simulator.
 
 ## Use of AI tools
 
-Game concept, mechanics and theme by No Game No Life team.
+Game concept, mechanics and theme: [YOUR NAME / TEAM NAME].
 
 Claude (a large language model by Anthropic) was used to help refine the game design,
 research real events and sources, write the game code (HTML, CSS and JavaScript), and draft
