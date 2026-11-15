@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fix and fly: Go Rocket!</title>
+<title>Fix and Fly: Go Rocket!</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root{color-scheme:dark;--bg:#120d2b;--panel:#1d1647;--line:#4a3d9a;--ink:#f4ecd8;--dim:#a99fd6;--amber:#ffb000;--bad:#ff5a7a;--ok:#5ef2b0;
@@ -95,18 +95,26 @@ heat:'Parker Solar Probe survives the Sun’s heat with a heavy carbon shield, a
 debris:'Tiny rocks hit spacecraft at high speed. Stronger hulls resist them but weigh more.',
 flare:'NASA cannot yet reliably predict solar flares, so crews must be protected before they happen.'};
 const EARTH={x:300,y:800,r:40},SUN={x:1300,y:800,r:70},W=2600,H=1600;
+const MOON={d:110,r:11,per:546};
 const doseD=d=>d<250?.7:.7+1.14*Math.min(1,(d-250)/1500),fluxS=d=>Math.pow(1000/Math.max(d,60),2),
 radD=d=>Math.max(0,doseD(d)-.7)*2.1*(1-S.I.g),heatD=d=>Math.max(0,fluxS(d)-S.B.tol)*.9;
-const IMGS={},TEX={};['earth','sun'].forEach(k=>{const i=new Image();i.src='assets/'+k+'.png';IMGS[k]=i});
+const IMGS={},TEX={};['earth','sun','rocket','satellite_broken','satellite_fixed','star'].forEach(k=>{const i=new Image();i.src='assets/'+k+'.png';IMGS[k]=i});
+function spr(c,k,x,y,w,h){let m=IMGS[k];if(!m){m=IMGS[k]=new Image();m.src='assets/'+k+'.png'}if(m.complete&&m.naturalWidth){c.drawImage(m,x,y,w,h);return 1}return 0}
 function tex(k){const m=IMGS[k];if(m&&m.complete&&m.naturalWidth)return m;if(TEX[k])return TEX[k];
  const w=512,h=256,o=document.createElement('canvas');o.width=w;o.height=h;const g=o.getContext('2d'),e=k==='earth';let s=e?7:3;const rnd=()=>(s=s*16807%2147483647)/2147483647;
  g.fillStyle=e?'#2b64d9':'#ffb000';g.fillRect(0,0,w,h);
  for(let i=0;i<(e?26:40);i++){const x=rnd()*w,y=(.15+.7*rnd())*h,rx=e?18+rnd()*40:5+rnd()*10,ry=rx*(.5+rnd()*.5);g.fillStyle=e?'#3fa34d':'#c2410c';for(const dx of[-w,0,w]){g.beginPath();g.ellipse(x+dx,y,rx,ry,0,0,7);g.fill()}}
  if(e){g.fillStyle='#f4ecd8';g.fillRect(0,0,w,10);g.fillRect(0,h-10,w,10)}
  return TEX[k]=o}
-function globe(c,x,y,r,t,per,tilt,shade){const W4=r*4,off=(S.t/per%1)*W4;
- c.save();c.translate(x,y);c.rotate(tilt);c.beginPath();c.arc(0,0,r,0,7);c.clip();
- c.drawImage(t,-r+off-W4,-r,W4,r*2);c.drawImage(t,-r+off,-r,W4,r*2);
+function globe(c,x,y,r,t,per,tilt,shade){
+ const iw=t.naturalWidth||t.width,ih=t.naturalHeight||t.height,rot=S.t/per%1;
+ c.save();c.translate(x,y);c.rotate(tilt);
+ if(iw/ih<1.4){c.save();c.rotate(-rot*6.2832);c.drawImage(t,-r,-r,r*2,r*2);c.restore()}
+ else{c.beginPath();c.arc(0,0,r,0,7);c.clip();
+  for(let px=-r;px<r;px+=2){const xc=px+1,s=Math.max(-.99,Math.min(.99,xc/r)),u=((Math.asin(s)/6.2832-rot)%1+1)%1,
+   sw=Math.min(iw/8,Math.max(1,iw/(3.1416*r)/Math.sqrt(1-s*s))),sx=Math.min(u*iw,iw-sw),ch=2*Math.sqrt(r*r-xc*xc);
+   c.drawImage(t,sx,0,sw,ih,px,-ch/2,2.5,ch)}}
+ c.beginPath();c.arc(0,0,r,0,7);c.clip();
  const g=c.createRadialGradient(r*.3,0,r*.1,0,0,r);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,shade);c.fillStyle=g;c.fillRect(-r,-r,r*2,r*2);c.restore()}
 let sel={b:0,e:0,i:0},S,raf,K={},seen={},tt;
 const part=()=>({B:BODY[sel.b],E:ENG[sel.e],I:INT[sel.i]});
@@ -126,11 +134,11 @@ function start(){
  const{B,E,I}=part(),t=tot();
  S={a:0,x:EARTH.x+70,y:EARTH.y,vx:0,vy:0,hp:100,fuel:t.fuel,fmax:t.fuel,bud:t.left,got:[],t:0,inv:0,
   mi:0,ph:'find',pt:0,wrong:0,evlog:[],fl:0,ep:0,pause:0,mg:0,mini:Array.from({length:30},rm),dmg:{rad:0,heat:0,debris:0,flare:0},B,E,I,m:t.m,
-  deb:Array.from({length:12+6*(LV-1)},()=>({x:600+Math.random()*1900,y:Math.random()*H,vx:(Math.random()-.5)*40,vy:(Math.random()-.5)*40}))};
+  deb:Array.from({length:12+6*(LV-1)},()=>({x:600+Math.random()*1900,y:Math.random()*H,vx:(Math.random()-.5)*40,vy:(Math.random()-.5)*40,v:Math.floor(Math.random()*3),a:Math.random()*6.3,ra:(Math.random()-.5)*1.6}))};
  seen={};K={};show('flight');last=performance.now();raf=requestAnimationFrame(loop);
 }
 let last=0;
-function rm(){let x,y;do{x=80+Math.random()*(W-160);y=80+Math.random()*(H-160)}while(Math.hypot(x-SUN.x,y-SUN.y)<110);return{x,y,g:0}}
+function rm(){let x,y;do{x=80+Math.random()*(W-160);y=80+Math.random()*(H-160)}while(Math.hypot(x-SUN.x,y-SUN.y)<110);return{x,y,g:0,vx:(Math.random()-.5)*30,vy:(Math.random()-.5)*30,a:0,ra:(Math.random()-.5)*2}}
 const EVT=[
 {n:'Solar flare',dmg:5,dur:9,why:'The Sun’s twisted magnetic field snapped and threw out a burst of charged particles.',
 clue:'Charged particles are stopped by hydrogen-rich material like plastic, and a magnetic field can bend them. Metal plating alone does little. Crew need a protected core, and a quick burn can add distance from the source.',
@@ -153,18 +161,18 @@ clue:'Space has no air to even out the heat, so the sunny side bakes while the s
 fact:'Apollo spacecraft used a slow “barbecue roll” to even out temperatures, and most spacecraft wear multilayer insulation.',
 u:{b:[['Multi-layer insulation blankets',14,.4],['Black matte paint',4,0]],e:[['Slow barbecue-roll rotation',8,.3],['Extra boost',8,0]],i:[['Heater and radiator loop',12,.25],['Extra seat padding',4,0]]}}];
 const SATS=[
-{n:'Earth observer',x:900,y:950,e:0,sub:'Power system',parts:[['Replace the solar array power line',1],['Reboot the onboard computer',0,'The computer was fine. The readings show a sudden power loss.'],['Recalibrate the Earth sensor',0,'Pointing was normal. The problem is the power output.']],fix:'Replace the damaged power line from the solar array',
+{n:'Earth observer',img:'midori_ii',x:900,y:950,e:0,sub:'Power system',parts:[['Replace the solar array power line',1],['Reboot the onboard computer',0,'The computer was fine. The readings show a sudden power loss.'],['Recalibrate the Earth sensor',0,'Pointing was normal. The problem is the power output.']],fix:'Replace the damaged power line from the solar array',
 tel:['Solar array output: 6 kW to 1 kW in minutes','Magnetic field: strongly disturbed','Radiation: energetic particle storm'],
 why:'Real case: in October 2003 Japan’s Midori-II lost most of its solar power within minutes. Engineers traced the fault to the power line between the solar cells and the satellite body.',
 ex:{n:'Halloween storm, October 2003',why:'A huge flare and coronal mass ejection filled space with energetic particles while you work.'}},
-{n:'Comms constellation',x:1750,y:420,e:2,sub:'Orbit control',parts:[['Fire the thrusters to climb to a higher orbit',1],['Replace the solar panels',0,'Power was normal. The problem is drag and falling altitude.'],['Reset the radio transmitter',0,'Communication was fine. The spacecraft is stuck in safe mode and sinking.']],fix:'Fire the thrusters to climb out of the dense air',
+{n:'Comms constellation',img:'starlink',x:1750,y:420,e:2,sub:'Orbit control',parts:[['Fire the thrusters to climb to a higher orbit',1],['Replace the solar panels',0,'Power was normal. The problem is drag and falling altitude.'],['Reset the radio transmitter',0,'Communication was fine. The spacecraft is stuck in safe mode and sinking.']],fix:'Fire the thrusters to climb out of the dense air',
 tel:['Altitude: low and falling','Drag: up to 50% above normal','Mode: stuck in safe mode, cannot raise orbit'],
 why:'Real case: in February 2022 a minor geomagnetic storm heated the upper atmosphere, raised drag, and 38 of 49 new Starlink satellites were lost.',
 ex:{n:'Geomagnetic storm, February 2022',dmg:2,tg:EARTH,why:'The storm swelled the upper atmosphere. Drag is pulling your rocket back toward Earth.',
 clue:'Drag pulls you toward Earth. A smooth shape cuts it, and fighting it takes raw thrust. Efficiency alone will not save you.',
 fact:'NOAA rated the 2022 storm as minor, yet it raised drag enough to doom most of a satellite batch.',
 u:{b:[['Streamlined fairing',14,.4],['Heavy armor plating',8,0]],e:[['High-thrust booster',16,.45],['Efficiency tune-up',8,0]],i:[['Autopilot drag compensation',10,.15],['Extra seat padding',4,0]]}}},
-{n:'Data relay',x:2250,y:1250,e:1,sub:'Attitude control (Earth sensor)',parts:[['Recalibrate the Earth sensor',1],['Replace the solar array power line',0,'Power was normal. The sensor is giving bad signals.'],['Fire the thrusters to climb higher',0,'Altitude was fine. The pointing is off.']],fix:'Reset and recalibrate the Earth sensor',
+{n:'Data relay',img:'kodama',x:2250,y:1250,e:1,sub:'Attitude control (Earth sensor)',parts:[['Recalibrate the Earth sensor',1],['Replace the solar array power line',0,'Power was normal. The sensor is giving bad signals.'],['Fire the thrusters to climb higher',0,'Altitude was fine. The pointing is off.']],fix:'Reset and recalibrate the Earth sensor',
 tel:['Earth sensor signal: abnormal','Pointing: drifting off target','Radiation: particle burst'],
 why:'Real case: during the 2003 storms the Kodama relay satellite had Earth sensor signal errors and a temporary shutdown.',
 ex:{n:'Particle burst, October 2003',dmg:4,why:'Energetic particles are charging your hull and confusing your electronics.',
@@ -222,10 +230,10 @@ function loop(n){
  hit('rad',rad*fm,dt);hit('heat',heat,dt);
  if(dS<SUN.r+6){S.dmg.heat+=S.hp;S.hp=0}
  S.inv-=dt;
- S.deb.forEach(d=>{d.x=(d.x+d.vx*dt+W)%W;d.y=(d.y+d.vy*dt+H)%H;
+ S.deb.forEach(d=>{d.a+=d.ra*dt;d.x=(d.x+d.vx*dt+W)%W;d.y=(d.y+d.vy*dt+H)%H;
   if(S.inv<=0&&Math.hypot(S.x-d.x,S.y-d.y)<22){const a=8*(1+.35*(LV-1))*(1-.6*S.B.s);S.hp-=a;S.dmg.debris+=a;S.inv=1;if(!seen.debris){seen.debris=1;toast('<b class="bad">Debris hit.</b> '+FACTS.debris)}}});
  STARS.forEach(s=>{if(!S.got.includes(s)&&Math.hypot(S.x-s.x,S.y-s.y)<30){S.got.push(s);S.bud+=15;toast('<b class="ok">'+s.n+' collected! +$15M</b><br>'+s.d,6500)}});
- S.mini.forEach(m=>{if(!m.g&&Math.hypot(S.x-m.x,S.y-m.y)<22){m.g=1;S.bud+=3;S.mg++}});hud();draw();
+ S.mini.forEach(m=>{if(m.g)return;m.x=(m.x+m.vx*dt+W)%W;m.y=(m.y+m.vy*dt+H)%H;m.a+=m.ra*dt;if(Math.hypot(S.x-m.x,S.y-m.y)<22){m.g=1;S.bud+=3;S.mg++}});hud();draw();
  if(S.hp<SAFE||S.mi>=SATS.length){end(S.mi>=SATS.length&&S.hp>=SAFE);return}
  raf=requestAnimationFrame(loop);
 }
@@ -247,14 +255,22 @@ function draw(){
  c.strokeStyle='#ff5a7a55';c.setLineDash([6,8]);c.beginPath();c.arc(SUN.x,SUN.y,400,0,7);c.stroke();c.setLineDash([]);
  globe(c,SUN.x,SUN.y,SUN.r,tex('sun'),508,.1265,'rgba(150,40,0,.55)');
  globe(c,EARTH.x,EARTH.y,EARTH.r,tex('earth'),20,.408,'rgba(0,0,40,.65)');
+ {const ma=1-S.t/MOON.per*6.2832,mx=EARTH.x+Math.cos(ma)*MOON.d,my=EARTH.y+Math.sin(ma)*MOON.d;
+  c.lineWidth=1;c.strokeStyle='rgba(255,255,255,.12)';c.beginPath();c.arc(EARTH.x,EARTH.y,MOON.d,0,7);c.stroke();
+  c.save();c.translate(mx,my);c.rotate(ma);
+  if(!spr(c,'moon',-MOON.r,-MOON.r,MOON.r*2,MOON.r*2)){c.fillStyle='#b9b4c9';c.beginPath();c.arc(0,0,MOON.r,0,7);c.fill();c.fillStyle='#7f7a92';c.fillRect(-MOON.r+2,-3,5,5);c.fillRect(2,-6,4,4)}
+  c.restore();c.fillStyle='#f4ecd8';c.fillText('MOON',mx-14,my+MOON.r+12)}
  c.fillStyle='#f4ecd8';c.font='10px monospace';c.fillText('EARTH',EARTH.x-20,EARTH.y+58);c.fillText('SUN',SUN.x-12,SUN.y+90);
- c.strokeStyle='#8f86c9';S.deb.forEach(d=>{c.strokeRect(d.x-8,d.y-8,16,16)});
- STARS.forEach(s=>{const g=S.got.includes(s);c.fillStyle=g?'#5ef2b0':'#fff27a';c.beginPath();c.moveTo(s.x,s.y-14);c.lineTo(s.x+9,s.y);c.lineTo(s.x,s.y+14);c.lineTo(s.x-9,s.y);c.fill();c.fillText(s.n,s.x-30,s.y+28)});
+ c.strokeStyle='#8f86c9';S.deb.forEach(d=>{c.save();c.translate(d.x,d.y);c.rotate(d.a);if(!spr(c,'debris_'+(d.v+1),-14,-14,28,28))c.strokeRect(-8,-8,16,16);c.restore()});
+ STARS.forEach((s,i)=>{const g=S.got.includes(s),x=s.x+Math.sin(S.t*.6+i)*6,y=s.y+Math.cos(S.t*.5+i*1.3)*5,tw=.65+.35*Math.sin(S.t*2.2+i*1.7),k=s.n.toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+ c.fillStyle=g?'#5ef2b0':'#fff27a';c.globalAlpha=g?.4:tw;
+ if(!spr(c,k,x-18,y-18,36,36)&&!spr(c,'star',x-16,y-16,32,32)){c.beginPath();c.moveTo(x,y-14);c.lineTo(x+9,y);c.lineTo(x,y+14);c.lineTo(x-9,y);c.fill()}
+ c.globalAlpha=1;c.fillText(s.n,x-30,y+28)});
  if(1){c.strokeStyle='#5ef2b0';c.setLineDash([8,8]);c.beginPath();c.arc(EARTH.x,EARTH.y,260,0,7);c.stroke();c.setLineDash([])}
- SATS.forEach((s,i)=>{c.fillStyle=i<S.mi?'#5ef2b0':'#ff5a7a';c.fillRect(s.x-6,s.y-6,12,12);c.fillRect(s.x-22,s.y-3,12,6);c.fillRect(s.x+10,s.y-3,12,6);if(i===S.mi){c.fillStyle='#f4ecd8';c.fillText(s.n,s.x-30,s.y+24)}});
- c.fillStyle='#7df9ff';S.mini.forEach(m=>{if(!m.g){c.fillRect(m.x-2,m.y-5,4,10);c.fillRect(m.x-5,m.y-2,10,4)}});
+ SATS.forEach((s,i)=>{c.fillStyle=i<S.mi?'#5ef2b0':'#ff5a7a';const sk=i<S.mi?'fixed':'broken';if(!(spr(c,s.img+'_'+sk,s.x-24,s.y-24,48,48)||spr(c,s.img,s.x-24,s.y-24,48,48)||spr(c,'satellite_'+sk,s.x-22,s.y-22,44,44))){c.fillRect(s.x-6,s.y-6,12,12);c.fillRect(s.x-22,s.y-3,12,6);c.fillRect(s.x+10,s.y-3,12,6)}if(i===S.mi){c.fillStyle='#f4ecd8';c.fillText(s.n,s.x-30,s.y+24)}});
+ c.fillStyle='#7df9ff';S.mini.forEach((m,i)=>{if(m.g)return;c.save();c.translate(m.x,m.y);c.rotate(m.a);c.globalAlpha=.7+.3*Math.sin(S.t*3+i);if(!spr(c,'mini_star',-8,-8,16,16)){c.fillRect(-2,-5,4,10);c.fillRect(-5,-2,10,4)}c.restore()});
  c.translate(S.x,S.y);c.rotate(S.a);c.strokeStyle=S.inv>0&&Math.floor(S.t*10)%2?'#ff5a7a':'#f4ecd8';c.lineWidth=2;
- c.beginPath();c.moveTo(14,0);c.lineTo(-10,-9);c.lineTo(-6,0);c.lineTo(-10,9);c.closePath();c.stroke();
+ if(!spr(c,'rocket',-18,-18,36,36)){c.beginPath();c.moveTo(14,0);c.lineTo(-10,-9);c.lineTo(-6,0);c.lineTo(-10,9);c.closePath();c.stroke()}
  if(K.t&&S.fuel>0){c.strokeStyle='#ffb000';c.beginPath();c.moveTo(-8,-4);c.lineTo(-20-Math.random()*8,0);c.lineTo(-8,4);c.stroke()}
  c.restore();
  const n=S.ph==='send'?EARTH:SATS[S.mi];
